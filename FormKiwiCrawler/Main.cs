@@ -339,7 +339,7 @@
             Settings.ThreadCount = 1;
 
             // 设置爬取深度
-            Settings.Depth = Convert.ToByte(1000);//页码数+1
+            Settings.Depth = Convert.ToInt32(1000);//页码数+1
 
             // 设置爬取时忽略的 Link，通过后缀名的方式，可以添加多个
             Settings.EscapeLinks.Add(".jpg");
@@ -374,7 +374,7 @@
             }
             if (radioDepthM.Checked)
             {
-                Settings.Depth = configModel.kPageTotal == null ? Convert.ToByte(100) : Convert.ToByte(configModel.kPageTotal + 1);
+                Settings.Depth = configModel.kPageTotal == null ? Convert.ToInt32(100) : Convert.ToInt32(configModel.kPageTotal + 1);
             }
             //速度1~5
             if (radioSpeedNo.Checked)
