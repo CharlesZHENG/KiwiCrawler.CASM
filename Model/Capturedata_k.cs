@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 namespace KiwiCrawler.Model
 {
     /// <summary>
@@ -17,10 +16,11 @@ namespace KiwiCrawler.Model
         private string _ktype;
         private DateTime _kcapturedatetime;
         private int? _knumber;
-        private string _knotes;
+        private int _kextracted = 0;
         private string _kpagemd5;
         private int _kindexid;
         private DateTime? _kupdatetime;
+        private string _knotes;
         /// <summary>
         /// auto_increment
         /// </summary>
@@ -72,10 +72,10 @@ namespace KiwiCrawler.Model
         /// <summary>
         /// 
         /// </summary>
-        public string kNotes
+        public int kExtracted
         {
-            set { _knotes = value; }
-            get { return _knotes; }
+            set { _kextracted = value; }
+            get { return _kextracted; }
         }
         /// <summary>
         /// 
@@ -100,6 +100,14 @@ namespace KiwiCrawler.Model
         {
             set { _kupdatetime = value; }
             get { return _kupdatetime; }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public string kNotes
+        {
+            set { _knotes = value; }
+            get { return _knotes; }
         }
         #endregion Model
 
