@@ -46,9 +46,9 @@ namespace KiwiCrawler.DAL
         {
             StringBuilder strSql = new StringBuilder();
             strSql.Append("insert into capturedata_k(");
-            strSql.Append("kUrl,kContent,kType,kCaptureDateTime,kNumber,kExtracted,kPageMD5,kIndexId,kUpdateTime,kNotes)");
+            strSql.Append("kUrl,kContent,kType,kCaptureDateTime,kNumber,kExtracted,kPageMD5,kIndexId,kUpdateTime,kIsUpdated,kNotes)");
             strSql.Append(" values (");
-            strSql.Append("@kUrl,@kContent,@kType,@kCaptureDateTime,@kNumber,@kExtracted,@kPageMD5,@kIndexId,@kUpdateTime,@kNotes)");
+            strSql.Append("@kUrl,@kContent,@kType,@kCaptureDateTime,@kNumber,@kExtracted,@kPageMD5,@kIndexId,@kUpdateTime,@kIsUpdated,@kNotes)");
             MySqlParameter[] parameters = {
                     new MySqlParameter("@kUrl", MySqlDbType.Text),
                     new MySqlParameter("@kContent", MySqlDbType.LongText),
@@ -59,6 +59,7 @@ namespace KiwiCrawler.DAL
                     new MySqlParameter("@kPageMD5", MySqlDbType.VarChar,32),
                     new MySqlParameter("@kIndexId", MySqlDbType.Int32,11),
                     new MySqlParameter("@kUpdateTime", MySqlDbType.DateTime),
+                    new MySqlParameter("@kIsUpdated", MySqlDbType.Int32,11),
                     new MySqlParameter("@kNotes", MySqlDbType.Text)};
             parameters[0].Value = model.kUrl;
             parameters[1].Value = model.kContent;
@@ -69,7 +70,8 @@ namespace KiwiCrawler.DAL
             parameters[6].Value = model.kPageMD5;
             parameters[7].Value = model.kIndexId;
             parameters[8].Value = model.kUpdateTime;
-            parameters[9].Value = model.kNotes;
+            parameters[9].Value = model.kIsUpdated;
+            parameters[10].Value = model.kNotes;
 
             int rows = DbHelperMySQL.ExecuteSql(strSql.ToString(), parameters);
             if (rows > 0)
@@ -97,6 +99,7 @@ namespace KiwiCrawler.DAL
             strSql.Append("kPageMD5=@kPageMD5,");
             strSql.Append("kIndexId=@kIndexId,");
             strSql.Append("kUpdateTime=@kUpdateTime,");
+            strSql.Append("kIsUpdated=@kIsUpdated,");
             strSql.Append("kNotes=@kNotes");
             strSql.Append(" where kId=@kId");
             MySqlParameter[] parameters = {
@@ -109,6 +112,7 @@ namespace KiwiCrawler.DAL
                     new MySqlParameter("@kPageMD5", MySqlDbType.VarChar,32),
                     new MySqlParameter("@kIndexId", MySqlDbType.Int32,11),
                     new MySqlParameter("@kUpdateTime", MySqlDbType.DateTime),
+                    new MySqlParameter("@kIsUpdated", MySqlDbType.Int32,11),
                     new MySqlParameter("@kNotes", MySqlDbType.Text),
                     new MySqlParameter("@kId", MySqlDbType.Int32,11)};
             parameters[0].Value = model.kUrl;
@@ -120,8 +124,9 @@ namespace KiwiCrawler.DAL
             parameters[6].Value = model.kPageMD5;
             parameters[7].Value = model.kIndexId;
             parameters[8].Value = model.kUpdateTime;
-            parameters[9].Value = model.kNotes;
-            parameters[10].Value = model.kId;
+            parameters[9].Value = model.kIsUpdated;
+            parameters[10].Value = model.kNotes;
+            parameters[11].Value = model.kId;
 
             int rows = DbHelperMySQL.ExecuteSql(strSql.ToString(), parameters);
             if (rows > 0)
@@ -185,7 +190,7 @@ namespace KiwiCrawler.DAL
         {
 
             StringBuilder strSql = new StringBuilder();
-            strSql.Append("select kId,kUrl,kContent,kType,kCaptureDateTime,kNumber,kExtracted,kPageMD5,kIndexId,kUpdateTime,kNotes from capturedata_k ");
+            strSql.Append("select kId,kUrl,kContent,kType,kCaptureDateTime,kNumber,kExtracted,kPageMD5,kIndexId,kUpdateTime,kIsUpdated,kNotes from capturedata_k ");
             strSql.Append(" where kId=@kId");
             MySqlParameter[] parameters = {
                     new MySqlParameter("@kId", MySqlDbType.Int32)
@@ -253,6 +258,10 @@ namespace KiwiCrawler.DAL
                 {
                     model.kUpdateTime = DateTime.Parse(row["kUpdateTime"].ToString());
                 }
+                if (row["kIsUpdated"] != null && row["kIsUpdated"].ToString() != "")
+                {
+                    model.kIsUpdated = int.Parse(row["kIsUpdated"].ToString());
+                }
                 if (row["kNotes"] != null)
                 {
                     model.kNotes = row["kNotes"].ToString();
@@ -267,7 +276,7 @@ namespace KiwiCrawler.DAL
         public DataSet GetList(string strWhere)
         {
             StringBuilder strSql = new StringBuilder();
-            strSql.Append("select kId,kUrl,kContent,kType,kCaptureDateTime,kNumber,kExtracted,kPageMD5,kIndexId,kUpdateTime,kNotes ");
+            strSql.Append("select kId,kUrl,kContent,kType,kCaptureDateTime,kNumber,kExtracted,kPageMD5,kIndexId,kUpdateTime,kIsUpdated,kNotes ");
             strSql.Append(" FROM capturedata_k ");
             if (strWhere.Trim() != "")
             {

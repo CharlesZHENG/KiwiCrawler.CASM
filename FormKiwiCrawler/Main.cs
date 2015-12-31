@@ -280,11 +280,11 @@
 
         #endregion
         #region 方法-静态=》数据输出
-        private static void writeToLogView(DataReceivedEventArgs dataReceived)
+        private static void writeToLogView(DataReceivedEventArgs dataReceived, String str)
         {
             //Kiwi-log         
 
-            kiwiConsole.WriteOutput(DateTime.Now.ToString() + " -" + fileId + "-【" + Thread.CurrentThread.ManagedThreadId + "】-" + dataReceived.Url + "\r\n", Color.Green);
+            kiwiConsole.WriteOutput(DateTime.Now.ToString() + " -" + fileId + "-【" + Thread.CurrentThread.ManagedThreadId + "】-" + "【" + str + "】" + dataReceived.Url + "\r\n", Color.Green);
         }
 
         private static void WriteToFiles(DataReceivedEventArgs dataReceived)
@@ -292,21 +292,47 @@
 
             KiwiCrawler.BLL.Capturedata_kBll bll = new KiwiCrawler.BLL.Capturedata_kBll();
             KiwiCrawler.Model.Capturedata_k model = new KiwiCrawler.Model.Capturedata_k();
-            model.kCaptureDateTime = DateTime.Now;
             model.kContent = dataReceived.Html.Trim();
-            model.kType = configModel.kAddressBusinessType.Trim();//民政部门；安全生产监督管理局；地震局
-            model.kUrl = dataReceived.Url;
-            fileId++;
+            model.kPageMD5 = MD5Helper.MD5Helper.ComputeMd5String(model.kContent);//获得MD5值            
+            //判断是否存在MD5值，存在不处理-->说明：该页面已经存在且无变化
+            //                 不存在    -->URL是否存在？-->存在-->更新了
+            //                                          -->不存在-->新添加的
+            KiwiCrawler.Model.Capturedata_k getModel = bll.GetModelList("kPageMD5='" + model.kPageMD5 + "'").FirstOrDefault();
+            if (getModel == null)//不存在
+            {
+                model.kUrl = dataReceived.Url;
+                getModel = bll.GetModelList("kUrl=" + "'" + model.kUrl + "'").FirstOrDefault();
+                if (getModel != null)//更新了
+                {
+                    getModel.kContent = model.kContent;
+                    getModel.kExtracted = 0;
+                    getModel.kPageMD5 = model.kPageMD5;
+                    getModel.kUpdateTime = DateTime.Now;
+                    getModel.kIsUpdated = 1;
+                    //添加一个字段
+                    bll.Update(getModel);
+                    writeToLogView(dataReceived, "更新");
+                }
+                else//新添加的==>扫描之后，有新添加的数据，完成度如何更新
+                {
+                    model.kCaptureDateTime = DateTime.Now;
+                    model.kType = configModel.kAddressBusinessType.Trim();//民政部门；安全生产监督管理局；地震局                    
+                    fileId++;
+                    model.kNumber = fileId;
+                    model.kExtracted = 0;
+                    model.kNotes = configModel.kId + ":" + configModel.kKeyWords;
+                    model.kUpdateTime = model.kCaptureDateTime;
+                    model.kIndexId = configModel.kId;
+                    model.kIsUpdated = 0;
+                    bll.Add(model);
+                    writeToLogView(dataReceived, "添加");
+                }
+            }
+            else
+            {
+                writeToLogView(dataReceived, "存在");
+            }
 
-            model.kNumber = fileId;
-            model.kNotes = configModel.kId + ":" + configModel.kKeyWords;
-
-            model.kPageMD5 = MD5Helper.MD5Helper.ComputeMd5String(model.kContent);
-            model.kUpdateTime = model.kCaptureDateTime;
-            model.kIndexId = configModel.kId;
-
-            bll.Add(model);
-            writeToLogView(dataReceived);
 
         }
         #endregion
@@ -627,56 +653,61 @@
                 //获得锁定
                 //Kiwi-未测试的代码               
                 //处理上一个任务
-                var compalte_k = (decimal?)Convert.ToDecimal(dgvTaskCapture.SelectedRows[0].Cells[8].Value.ToString().TrimEnd('%')) / 100;
-                if ((compalte_k >= 0.9m) && (compalte_k <= 1.0m))//先简单的这样控制一下。
+                #region 开始抓取任务
+                if (IsTaskOver())
                 {
-                    MessageBox.Show("该任务抓取已经完成，请选择其他任务");
+                    DeWorkingState(dgvTaskCapture.Tag as DataGridViewCellEventArgs);
+                    if (SettingCustomValues(0))
+                    {
+                        RunNewTask(e);
+                    }
+
                 }
                 else
                 {
-                    if (IsTaskOver())
-                    {
-                        DeWorkingState(dgvTaskCapture.Tag as DataGridViewCellEventArgs);
-                        if (SettingCustomValues(0))
-                        {
-                            RunNewTask(e);
-                        }
+                    #region 停止程序的代码 
+                    //isWriteTaskOver = true;
+                    //if (master != null)
+                    //{
+                    //    master.Stop();
+                    //    master = null;
+                    //}
+                    //while (DataReceivedEventArgs_Kiwi.Instance.Count > 0)
+                    //{
+                    //    DataReceivedEventArgs_Kiwi.Instance.DeQueue();
+                    //}
+                    //writeThread.Abort();
+                    ////while (ContentQueue_Kiwi.Instance.Count>0)
+                    ////{
+                    ////    ContentQueue_Kiwi.Instance.DeQueue();
+                    ////}                        
 
+                    //if (IsTaskOver())
+                    //{
+                    //    if (SettingCustomValues(0))
+                    //    {
+                    //        RunNewTask(e);
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    MessageBox.Show("请稍等，正在终止任务...");
+                    //} 
+                    #endregion
+                    MessageBox.Show("抓取任务正在进行，请等待任务结束...");
+                }
+                #endregion
+                /* 跟新的代码，添加扫描功能之后这个控制用不到了
+                    var compalte_k = (decimal?)Convert.ToDecimal(dgvTaskCapture.SelectedRows[0].Cells[8].Value.ToString().TrimEnd('%')) / 100;
+                    if ((compalte_k >= 0.9m) && (compalte_k <= 1.0m))//先简单的这样控制一下。
+                    {
+                        MessageBox.Show("该任务抓取已经完成，请选择其他任务");
                     }
                     else
                     {
-                        #region 停止程序的代码 
-                        //isWriteTaskOver = true;
-                        //if (master != null)
-                        //{
-                        //    master.Stop();
-                        //    master = null;
-                        //}
-                        //while (DataReceivedEventArgs_Kiwi.Instance.Count > 0)
-                        //{
-                        //    DataReceivedEventArgs_Kiwi.Instance.DeQueue();
-                        //}
-                        //writeThread.Abort();
-                        ////while (ContentQueue_Kiwi.Instance.Count>0)
-                        ////{
-                        ////    ContentQueue_Kiwi.Instance.DeQueue();
-                        ////}                        
 
-                        //if (IsTaskOver())
-                        //{
-                        //    if (SettingCustomValues(0))
-                        //    {
-                        //        RunNewTask(e);
-                        //    }
-                        //}
-                        //else
-                        //{
-                        //    MessageBox.Show("请稍等，正在终止任务...");
-                        //} 
-                        #endregion
-                        MessageBox.Show("抓取任务正在进行，请等待任务结束...");
                     }
-                }
+                    */
 
             }
 
@@ -881,16 +912,16 @@
             Capturedata_k model = new Capturedata_k();
             for (int i = 0; i < list.Count; i++)
             {
-                model = list[i];                                
+                model = list[i];
                 model.kPageMD5 = MD5Helper.MD5Helper.ComputeMd5String(model.kContent);
-                string temp = model.kNotes;                
+                string temp = model.kNotes;
                 temp = temp.Substring(0, temp.IndexOf(":"));
                 model.kIndexId = Convert.ToInt32(temp);
                 model.kUpdateTime = model.kCaptureDateTime;
-                captureDataBll.Update(model);                
+                captureDataBll.Update(model);
             }
-            MessageBox.Show("操作完成");            
-        }      
+            MessageBox.Show("操作完成");
+        }
         #endregion
     }
 }

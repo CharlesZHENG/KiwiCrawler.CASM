@@ -20,6 +20,7 @@ namespace KiwiCrawler.Model
         private string _kpagemd5;
         private int _kindexid;
         private DateTime? _kupdatetime;
+        private int _kisupdated = 0;
         private string _knotes;
         /// <summary>
         /// auto_increment
@@ -100,6 +101,14 @@ namespace KiwiCrawler.Model
         {
             set { _kupdatetime = value; }
             get { return _kupdatetime; }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public int kIsUpdated
+        {
+            set { _kisupdated = value; }
+            get { return _kisupdated; }
         }
         /// <summary>
         /// 
